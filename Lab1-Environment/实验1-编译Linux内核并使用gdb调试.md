@@ -96,7 +96,7 @@
 
   2. <https://blog.csdn.net/qq_42138566/article/details/89765781?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task>
 
-     > <font size=4 color=red>由于本次实验目的在于了解和使用qemu+gdb调试，而目前已有现成可编译版本，避免浪费时间在编译源代码的修改上。当然有兴趣的同学可以试一试。</font>
+     > <font color=red>由于本次实验目的在于了解和使用qemu+gdb调试，而目前已有现成可编译版本，避免浪费时间在编译源代码的修改上。当然有兴趣的同学可以试一试。</font>
 
 
 #### 2、准备模拟器qemu
@@ -167,7 +167,7 @@ $ qemu-system-i386 -m 16 -boot a -fda Image -hda hdc-0.11.img -s -S   # 可以�
 
 ​	关于qemu 选项的说明:
   ```shell
--fda Image：代表你把 Image 執行目錄下  
+-fda Image：代表你把 Image 执行目标下
 -hda hdc-0.11.img：代表你把 HD img，是一个模拟硬盘的文件，本次实验已提供
 -m：设定模拟的内存大小，本地设定为 16MB 
 -s: 服务器开启1234端口，若不想使用1234端口，则可以使用-gdb tcp:xxxx来取代-s选项
@@ -209,7 +209,7 @@ $ c                  #让qemu上的Linux继续运行
   $ target remote localhost:1234 #建立gdb和gdbserver之间的连接
   ```
 
-  > 注意事项：若出现架构不兼容的现象，如下图
+  > 注意事项：由于make debug默认调用qemu-system-x86_64 启动，若出现架构不兼容的现象，如下图  
   > ![1585363904362](https://git.lug.ustc.edu.cn/gloomy/ustc_os/raw/master/Lab1-Environment/picture/1585363904362.png)
   >
   > 在gdb中输入下面这条命令
@@ -244,7 +244,7 @@ $ pwd   #查看当前目录
 1. 我们需要知道img磁盘文件，对应分区的开始位置。这样我们才好挂载。所以，先用fdisk命令查看磁盘的分区情况：
 
   ```shell
-$ fdisk hdc-0.11.img
+  $ fdisk hdc-0.11.img
   ```
 
    ![1585374950753](https://git.lug.ustc.edu.cn/gloomy/ustc_os/raw/master/Lab1-Environment/picture/1585374950753.png)
