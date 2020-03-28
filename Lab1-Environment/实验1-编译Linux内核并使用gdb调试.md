@@ -235,7 +235,7 @@ $ c                  #让qemu上的Linux继续运行
  oslab 下的 `hdc-0.11.img` 是 0.11 内核启动后的根文件系统镜像文件，相当于在 qemu 虚拟机里装载的硬盘。
 
   ```shell
-$ cd ~/oslab/linux-0.11
+$ cd ~/oslab/Linux-0.11
 $ pwd   #查看当前目录
   ```
 
@@ -268,7 +268,7 @@ $ pwd   #查看当前目录
 5. 挂载分区，需要使用第二步计算的参数（offset）
 
   ```shell
-   $ sudo mount -t minix -o loop,offset=512 ~/Desktop/Linux-0.11/hdc-0.11.img ~/oslab/linux-0.11/hdc
+   $ sudo mount -t minix -o loop,offset=512 ~/Desktop/Linux-0.11/hdc-0.11.img ~/oslab/Linux-0.11/hdc
   ```
 
 6. 显示磁盘空间统计信息
@@ -355,8 +355,8 @@ $ more hllo.txt  # 查看文件内容
 6、关闭Linux0.11系统，并在主机挂载img镜像
 
   ```shell
-$ sudo mount -t minix -o loop,offset=512 ~/Desktop/Linux-0.11/hdc-0.11.img ~/oslab/linux-0.11/hdc
-$ cd ~/oslab/linux-0.11/hdc/usr
+$ sudo mount -t minix -o loop,offset=512 ~/Desktop/Linux-0.11/hdc-0.11.img ~/oslab/Linux-0.11/hdc
+$ cd ~/oslab/Linux-0.11/hdc/usr
 $ ll
 $ tail hello.txt
   ```
