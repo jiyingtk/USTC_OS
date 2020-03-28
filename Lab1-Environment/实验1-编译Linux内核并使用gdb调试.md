@@ -73,8 +73,8 @@
 * 下载Linux源代码，并解压
 
   ```shell
-$ wget https://git.lug.ustc.edu.cn/gloomy/ustc_os/raw/master/Linux-0.11-new.tar.gz
-$ tar -zvxf Linux-0.11-new.tar.gz
+$ wget https://git.lug.ustc.edu.cn/gloomy/ustc_os/raw/master/Linux-0.11-lab1.tar.gz
+$ tar -zvxf Linux-0.11-lab1.tar.gz
   ```
 
 
