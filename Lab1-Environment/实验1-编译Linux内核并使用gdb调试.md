@@ -15,7 +15,7 @@
 
 * Linux内核版本：Kernel 0.11
 
-* Hardware: 1 Core 2G RAM (若无电脑或本机配置较低，可尝试使用vlab进行实验[https://vlab.ustc.edu.cn/](https://vlab.ustc.edu.cn/) 选用镜像vlab01-ubuntu-desktop-18.04.tar.gz 即可)
+* Hardware: 1 Core 2G RAM (若无电脑或本机配置较低，可尝试使用vlab进行实验[https://vlab.ustc.edu.cn/](https://vlab.ustc.edu.cn/) 选用镜像vlab01-ubuntu-oslab-18.04.tar.gz 即可)
 
 * Virtualization Software: Virtual box / VMware Workstation
 
@@ -268,7 +268,7 @@ $ pwd   #查看当前目录
 5. 挂载分区，需要使用第二步计算的参数（offset）
 
   ```shell
-   $ sudo mount -t minix -o loop,offset=512 ~/Desktop/Linux-0.11/hdc-0.11.img ~/oslab/Linux-0.11/hdc
+   $ sudo mount -t minix -o loop,offset=512 ~/oslab/Linux-0.11/hdc-0.11.img ~/oslab/Linux-0.11/hdc
   ```
 
 6. 显示磁盘空间统计信息
@@ -355,7 +355,7 @@ $ more hllo.txt  # 查看文件内容
 6、关闭Linux0.11系统，并在主机挂载img镜像
 
   ```shell
-$ sudo mount -t minix -o loop,offset=512 ~/Desktop/Linux-0.11/hdc-0.11.img ~/oslab/Linux-0.11/hdc
+$ sudo mount -t minix -o loop,offset=512 ~/oslab/Linux-0.11/hdc-0.11.img ~/oslab/Linux-0.11/hdc
 $ cd ~/oslab/Linux-0.11/hdc/usr
 $ ll
 $ tail hello.txt
