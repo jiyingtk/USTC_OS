@@ -15,7 +15,7 @@
 
 * Linux内核版本：Kernel 0.11
 
-* Hardware: 1 Core 2G RAM (若无电脑或本机配置较低，可尝试使用vlab进行实验[https://vlab.ustc.edu.cn/](https://vlab.ustc.edu.cn/) 选用镜像vlab01-ubuntu-oslab-18.04.tar.gz 即可)
+* Hardware: 1 Core 2G RAM (若无电脑或本机配置较低，可尝试使用vlab进行实验[https://vlab.ustc.edu.cn/](https://vlab.ustc.edu.cn/) 选用镜像vlab01-ubuntu-desktop-18.04.tar.gz 即可)
 
 * Virtualization Software: Virtual box / VMware Workstation
 
