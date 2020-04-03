@@ -109,20 +109,21 @@
 
 - 并将可执行文件test复制到busybox下的_install目录下，重新打包该目录生成新的cpio.gz文件，运行qemu进入shell环境后，输入./test，执行用户程序。
 
-### 二、熟悉Linux下常见的系统调用
+### 二、熟悉Linux下常见的系统调用函数和库函数
 
-#### 1、熟悉以下系统调用的用法
+#### 1、熟悉以下函数的用法
 
 ```c
 pid_t fork();	//创建进程
 pid_t waitpid(pid_t pid,int* status,int options);	//等待指定pid的子进程结束
+
 int execv(const char *path, char *const argv[])；	//根据指定的文件名或目录名找到可执行文件，并用它来取代原调用进程的数据段、代码段和堆栈段，在执行完之后，原调用进程的内容除了进程号外，其他全部被新程序的内容替换了
 int system(const char* command);	//调用fork()产生子进程，在子进程执行参数command字符串所代表的										命令，此命令执行完后随即返回原调用的进程
 FILE* popen(const char* command, const char* mode);	//popen函数先执行fork，然后调用exec以执行			command，并且根据mode的值（"r"或"w"）返回一个指向子进程的stdout或指向stdin的文件指针
 int pclose(FILE* stream);	//关闭标准I/O流，等待命令执行结束
 ```
 
-#### 2、利用上面的系统调用函数实现一个简单的shell程序
+#### 2、利用上面的函数实现一个简单的shell程序
 
 - 要求如下：
 
