@@ -4,85 +4,128 @@
 
 ## 实验目的
 
+* 了解系统调用的基本过程
 * 学习如何添加Linux系统调用
 * 熟悉Linux下常见的系统调用
 
 ## 实验环境
 
-* OS：Ubuntu 14.04 （32位）
-* Linux内核版本：Kernel 2.6.26
-* **注意**：本次实验是以实验一为基础，如有不熟悉的步骤，请重新浏览实验一文档。**内核版本最好是2.6.26，否则代码可能会有所不同**。（<u>***注意加黑斜体下划线的地方。***</u>）
+* OS：Ubuntu 18.04 
+* Linux内核版本：Kernel 0.11
+* **注意**：本次实验是以实验一为基础，如有不熟悉的步骤，请重新浏览实验一文档。
+* **请大家留意加粗的内容**
+## 提交要求
+
+本次实验要求提交实验报告和代码.
+
+提交格式: 压缩包
+- 格式为 .7z/.rar/.zip, 
+- 命名格式为学号_姓名_实验二_版本
+  - 如PB10001000_张三_实验二_V1.X  
+  - 格式为V1.X 其中X为提交版本, 单向递增, 我们会以**最大的版本号**提交为准).
+
+提交内容为
+- 顶层目录
+  - EXP2.1 子目录1
+    - linux (Linux 0.11 修改源码文件夹, 名字为linux)
+      - kernal 文件夹
+      - include 文件夹
+    - 测试程序(test.c)
+    - HDC中usr/include/unistd.h 文件
+  - EXP2.2 子目录2
+  - 实验报告(学号+姓名+实验二命名, 提交PDF版本)
+
+
+实验报告的内容见实验内容部分
+
+
 ## 实验内容
+
 ### 一、添加Linux系统调用
+
+**!!!注意: 请大家先学习完 "背景知识学习" 这一小节(在本文档的后面)**
+
+**!!!如果有问题请先参阅本部分第六点**
+
+本部分实验报告要求:
+- 大概描述实验过程
+- 展示实验结果
+- **回答问题**
+  - 简要描述如何在Linux 0.11添加一个系统调用
+  - 系统是如何通过系统调用号索引到具体的调用函数的?
+  - 在Linux 0.11中, 系统调用最多支持几个参数? 有什么方法可以超过这个限制吗?
+
+本部分代码要求
+
+代码要求提交**include, kernel** 这两个文件夹, hdc中的usr/include/unistd.h, 测试代码(test.c), 格式见上.
+
+本部分实验内容主要有:  
+
 #### 1、分配系统调用号，修改系统调用表
-* 我们需要增加两个系统调用，分别称为print_val和str2num。对应的函数与如下形式**<u>*类似*</u>**：
+* 我们需要增加两个系统调用，分别称为print_val和str2num。对应的函数与如下形式 .
 
   ```c
     void print_val(int a);    //通过printk在控制台打印如下信息（假设a是1234）：
-  							//	in sys_print_val: 1234
-    void str2num(char *str, int str_len, int *ret);    //将一个有str_len个数字的字符串str转换成十进制数字，然后将结果写到ret指向的地址中
+    // in sys_print_val: 1234
+    int str2num(char *str, int str_len, long *ret);    //将一个有str_len个数字的字符串str转换成十进制数字，然后将结果写到ret指向的地址中, 其中数字大小要合适, 应当小于100000000(1*e^8).
   ```
 
-* 在Linux源代码根目录下，找到include/asm-x86/unistd_32.h文件，在文件末尾找到最大的已分配系统调用号，并<u>***仿照原格式***</u>在其后新增两个系统调用号。
+需要根据背景知识学习中的内容, 完成两个系统调用函数的添加. 
 
-  ```c
-  ......
-  #define __NR_utimensat		320
-  #define __NR_signalfd		321
-  #define __NR_timerfd_create	322
-  #define __NR_eventfd		323
-  #define __NR_fallocate		324
-  #define __NR_timerfd_settime	325
-  #define __NR_timerfd_gettime	326
-  
-  //在此添加
-  ```
+**添加的时候需要注意**
 
-* 为了让系统能根据系统调用号找到syscall_table中的相应表项，在arch/x86/kernel/syscall_table_32.S文件末尾中***<u>仿照原格式</u>***添加系统调用号和调用函数的对应关系。
+- 修改system_call.s 文件中的系统调用数量(nr_system_call参数)
+- 修改函数指针表时(sys_xxx), 需要按上面的格式增加函数原型, 如:
+    ```c
+      extern int sys_setreuid();
+      extern int sys_setregid();
+      // 这里添加函数原型
 
-  ```c
-  	......
-  	.long sys_timerfd_create
-  	.long sys_eventfd
-  	.long sys_fallocate
-  	.long sys_timerfd_settime	/* 325 */
-  	.long sys_timerfd_gettime
-  	
-  	//在此添加
-  ```
+      fn_ptr sys_call_table[] = { ... }
+     ```
 
-- ***<u>注意：系统调用函数名字应该以"sys_"开头。</u>***
+- 需要进入Linux 0.11文件系统(方法见实验一), 修改其中usr/include/unistd.h文件, 修改方式类似(这里建议不要直接拷贝linux源码中的unistd.h文件).
+
 
 #### 2、实现系统调用函数
 
-* 在include/linux/syscalls.h中声明新增的两个系统调用函数。注意sys_str2num的声明中指针参数需要有*<u>**"__user"宏**</u>*。
+需要新建一个文件kernel/xxx.c, 在其中完成两个系统调用的具体实现.
 
-  ```c
-  ......
-  asmlinkage long sys_timerfd_gettime(int ufd, struct itimerspec __user *otmr);
-  asmlinkage long sys_eventfd(unsigned int count);
-  asmlinkage long sys_fallocate(int fd, int mode, loff_t offset, loff_t len);
-  
-  //在此添加
-  ```
+注意第二个系统调用需要进行内核和用户空间的信息交换, 具体的解释已经在文后的背景知识学习的部分给出. 这里我们写回的数据结构是long, 需要用到put_fs_long宏.
 
-* 在kernel/sys.c中实现新增的两个系统调用函数，（<u>***注意：函数实现的头部与函数声明保持一致！***</u>）。
+**修改Makefile**
 
-* **提示：**sys_str2num的实现中需要利用copy_from_user和copy_to_user函数。(<u>***注意n的大小，不要复制过多数据，也不要复制过少的数据。***</u>)
+make是一个自动构建程序的程序. 一个工程中的源文件不计其数，其按类型、功能、模块分别放在若干个目录中，makefile定义了一系列的规则来指定哪些文件需要先编译，哪些文件需要后编译，哪些文件需要重新编译，甚至于进行更复杂的功能操作. make则读取Makefile中的内容去完成编译工作. 大家如果对makefile感兴趣可以参阅[[1](https://seisman.github.io/how-to-write-makefile/overview.html)][[2](https://en.wikipedia.org/wiki/Makefile)], 或者以Makefile为关键词自行搜索.
 
-  ```c
-  unsigned long copy_from_user(void * to, const void __user * from, unsigned long n);
-  unsigned long copy_to_user(void __user *to, const void *from, unsigned long n);
-  ```
+我们这次需要修改kernel目录下的Makefile文件. 需要修改两处
+第一处为(xxx为文件名, 下同)
+```
+OBJS  = sched.o system_call.o traps.o asm.o fork.o \
+	panic.o printk.o vsprintf.o sys.o exit.o \
+	signal.o mktime.o 
 
+改为
+
+OBJS  = sched.o system_call.o traps.o asm.o fork.o \
+	panic.o printk.o vsprintf.o sys.o exit.o \
+	signal.o mktime.o xxx.o
+```
+
+第二处为文件最后, 需要新增
+```
+xxx.s xxx.o: xxx.c  ../include/asm/segment.h
+```
+这里做一个解释, 后面跟着的那个路径(../include/asm/segment.h), 是我们在编写xxx.c时需要include的文件, **如果我们修改了include的文件(如增加), 需要在makefile文件中做对应的修改**.
 
 #### 3、编译内核
 * 执行如下命令编译内核
 
   ```shell
-  make i386_defconfig
+  make clean
   make
   ```
+  其中make clean 是清除编译的中间结果, make是执行编译的命令.
+  然后按实验一的方式运行.
 
 #### 4、编写测试程序
 * 创建一个简单的用户程序（文件名为test.c）验证已实现的系统调用正确性，要求能够从终端读取一串数字字符串，通过str2num系统调用将其转换成数字，然后通过print_val系统调用打印该数字。为避免混乱，执行用户程序后需要有如下输出：
@@ -92,22 +135,40 @@
     		78234
     		in sys_print_val: 78234
   ```
+一个标准测试程序应该为(下面只是一个参考).
 
-- **提示：**通过syscall函数执行系统调用。
+```c
+/* 有它，_syscallx等才有效。详见unistd.h */
+#define __LIBRARY__  
 
-  ```c
-  long int syscall (long int sysno, ...);	//sysno为系统调用号，后面跟若干个系统调用函数参数，参数个数与其原型一致
-  ```
+#include <unistd.h> /* 有它，编译器才能获知自定义的系统调用的编号 */
+
+_syscall1(int, print_val,int, a); /* print_val()在用户空间的接口函数, 下同 */
+_syscall3(int, str2num,char*,str,int,str_len, long*, ret);
+
+int main() {
+    ...
+    return 0;
+}
+
+```
 
 #### 5、运行测试程序
 
-- 使用GCC静态编译用户程序
+进入Linux 0.11系统内, 使用GCC静态编译用户程序
 
   ```shell
-  gcc -static test.c -o test
+  gcc test.c -o test
   ```
+然后执行程序:
+```shell
+./test
+```
 
-- 并将可执行文件test复制到busybox下的_install目录下，重新打包该目录生成新的cpio.gz文件，运行qemu进入shell环境后，输入./test，执行用户程序。
+#### 6. 常见问题
+
+* 如果编译出错, 首先执行 make clean, 然后执行make操作编译
+* 如果出现系统执行错误, 很可能是**hdc磁盘文件损坏**, 请重新下载hdc image文件.
 
 ### 二、熟悉Linux下常见的系统调用函数和库函数
 
@@ -167,4 +228,261 @@ int pclose(FILE* stream);	//关闭标准I/O流，等待命令执行结束
   ```
 
   
+## 背景知识学习
 
+**写在前面: 本部分内容主要参考了赵炯老师的<Linux内核完全注释> 和 哈尔滨工业大学的操作系统实验.**  
+
+大家有兴趣也可以去看一看这些资料.  
+
+首先我们回顾一下操作系统是如何实现系统调用的:
+1. 应用程序调用库函数（API）；
+2. API将系统调用号存入EAX，然后通过中断调用使系统进入内核态；
+3. 内核中的中断处理函数根据系统调用号，调用对应的内核函数（系统调用）；
+4. 系统调用完成相应功能，将返回值存入EAX，返回到中断处理函数；
+5. 中断处理函数返回到API中；
+6. API将EAX返回给应用程序。
+
+### 应用程序如何调用系统调用
+
+在通常情况下，调用系统调用和调用一个普通的自定义函数在代码上并没有什么区别，但调用后发生的事情有很大不同。调用自定义函数是通过 ***call*** 指令直接跳转到该函数的地址，继续运行。而调用系统调用，是调用系统库中为该系统调用编写的一个接口函数，叫API（Application Programming Interface）。API并不能完成系统调用的真正功能，它要做的是去调用真正的系统调用，过程是：
+
+1. 把系统调用的编号存入EAX
+2. 把函数参数存入其它通用寄存器
+3. 触发0x80号中断（int 0x80）
+
+0.11的lib目录下有一些已经实现的API。Linus编写它们的原因是在内核加载完毕后，会切换到用户模式下，做一些初始化工作，然后启动shell。而用户模式下的很多工作需要依赖一些系统调用才能完成，因此在内核中实现了这些系统调用的API。我们不妨看看最常用的write系统调用.
+```c
+lib/write.c
+/*
+ *  linux/lib/write.c
+ *
+ *  (C) 1991  Linus Torvalds
+ */
+
+#define __LIBRARY__
+#include <unistd.h>
+
+_syscall3(int,write,int,fd,const char *,buf,off_t,count)
+```
+_syscall3是一个宏，定义在include/unistd.h中，可以发现其中还有多个相似的_syscallx宏，x表示可传入的参数个数
+
+```c
+include/unistd.h
+#define _syscall3(type,name,atype,a,btype,b,ctype,c) \
+type name(atype a,btype b,ctype c) \
+{ \
+long __res; \
+__asm__ volatile ("int $0x80" \
+	: "=a" (__res) \
+	: "0" (__NR_##name),"b" ((long)(a)),"c" ((long)(b)),"d" ((long)(c))); \
+if (__res>=0) \
+	return (type) __res; \
+errno=-__res; \
+return -1; \
+}
+
+```
+展开后可以看到是将传入宏的参数替换成了一个函数定义, 它先将宏__NR_write存入EAX，将参数fd存入EBX，然后进行0x80中断调用。调用返回后，从EAX取出返回值，存入__res，再通过对__res的判断决定传给API的调用者什么样的返回值。其中__NR_write就是系统调用的编号，在include/unistd.h中定义, **在编号后面还定义了系统调用的函数原型**：
+
+```c
+include/unistd.h
+#ifdef __LIBRARY__
+
+...
+define __NR_write	4 // 系统调用编号
+...
+int write(int fildes, const char * buf, off_t count); // 系统调用原型
+...
+```
+
+
+### "int80" 做了什么?
+
+在内核初始化时，主函数（在init/main.c中)调用了sched_init()初始化函数：
+```c
+init/main
+void main(void)
+{
+    ……
+    time_init();
+    sched_init();
+    buffer_init(buffer_memory_end);
+    ……
+}
+```
+而sched_init()的定义为:
+
+```c
+kernel/sched.c
+void sched_init(void)
+{
+    ……
+    set_system_gate(0x80,&system_call);
+}
+```
+set_system_gate是个宏，在include/asm/system.h中定义为：
+
+```c
+include/asm/system.h
+#define set_system_gate(n,addr) \
+    _set_gate(&idt[n],15,3,addr)
+```
+_set_gate的定义是：
+```c
+include/asm/system.h
+#define _set_gate(gate_addr,type,dpl,addr) \
+__asm__ ("movw %%dx,%%ax\n\t" \
+    "movw %0,%%dx\n\t" \
+    "movl %%eax,%1\n\t" \
+    "movl %%edx,%2" \
+    : \
+    : "i" ((short) (0x8000+(dpl<<13)+(type<<8))), \
+    "o" (*((char *) (gate_addr))), \
+    "o" (*(4+(char *) (gate_addr))), \
+    "d" ((char *) (addr)),"a" (0x00080000))
+```
+这段的主要方法就是填写IDT（中断描述符表），将system_call函数地址写到0x80对应的中断描述符中，也就是在中断0x80发生后，自动调用函数system_call(具体过程感兴趣可以参考<Linux内核0.11完全注释>, 第四章相关内容)
+
+我们接着看system_call函数, 这是一个纯汇编函数:
+
+```x86asm
+kernel/system_calls.s
+……
+nr_system_calls = 72       # 这是系统调用总数。如果增删了系统调用，必须做相应修改(请特别注意这里)
+……
+.globl system_call
+.align 2
+system_call:
+    cmpl $nr_system_calls-1,%eax # 检查系统调用编号是否在合法范围内
+    ja bad_sys_call
+    push %ds
+    push %es
+    push %fs
+    pushl %edx
+    pushl %ecx
+    pushl %ebx        # push %ebx,%ecx,%edx，是传递给系统调用的参数
+    movl $0x10,%edx        # 让ds,es指向GDT，内核地址空间
+    mov %dx,%ds
+    mov %dx,%es
+    movl $0x17,%edx        # 让fs指向LDT，用户地址空间
+    mov %dx,%fs
+    call sys_call_table(,%eax,4) # 这句是关键
+    pushl %eax
+    movl current,%eax
+    cmpl $0,state(%eax)
+    jne reschedule
+    cmpl $0,counter(%eax)
+    je reschedule
+```
+
+还记得我们之前把系统调用号保存在EAX寄存器中吗? 这里我们看call sys_call_table(,%eax,4) 这一句.
+这句的大概意思是在sys_call_table中去找%eax寄存器对应的系统调用函数. sys_call_table定义如下:
+
+```c
+include/linux/sys.h 
+
+fn_ptr sys_call_table[] = { sys_setup, sys_exit, sys_fork, sys_read,
+sys_write, sys_open, sys_close, sys_waitpid, sys_creat, ...}
+```
+我们可以看到sys_write就是这个列表的第五个(下标为之前保存在EAX寄存器中的write系统调用的系统调用号). 我们可以得知, write系统调用实际的执行者是sys_write函数, 这个函数在fs/read_write.c中, 感兴趣大家可以自己去看看.
+
+**我们最后对write系统调用做一个总结**:  
+
+1. 调用内核函数write()
+2. 获取系统调用索引号, 并调用int 80触发中断(include/unistd.h)
+3. 中断处理函数system_call把参数入栈(kernel/system_call.s)
+4. 根据索引在sys_call_table中查找函数地址(include/linux/sys.h)
+5. 执行真正的系统调用函数sys_write() (fs/read_write.c)
+
+### 用printk()调试内核
+
+实验环境提供了基于C语言和汇编语言的两种调试手段。除此之外，适当地向屏幕输出一些程序运行状态的信息，也是一种很高效、便捷的调试方法，有时甚至是唯一的方法，被称为“printf法”。
+
+要知道到，printf()是一个只能在用户模式下执行的函数，而系统调用是在内核模式中运行，所以printf()不可用，要用printk()。它和printf的接口和功能基本相同，只是代码上有一点点不同。
+
+本次实验我们可以将其当作内核中的printf实验, 其和printf的使用方法基本相同.
+
+
+### 在用户态和核心态之间传递数据
+
+指针参数传递的是应用程序所在地址空间的逻辑地址，在内核中如果直接访问这个地址，访问到的是内核空间中的数据，不会是用户空间的。所以这里还需要一点儿特殊工作，才能在内核中从用户空间得到数据。
+
+我们以open()系统调用为例, 看看如何在内核空间读取用户空间的数据。
+
+```c
+int open(const char * filename, int flag, ...)
+{  
+    ……
+    __asm__("int $0x80"
+            :"=a" (res)
+            :"0" (__NR_open),"b" (filename),"c" (flag),
+            "d" (va_arg(arg,int)));
+    ……
+}
+```
+可以看出，系统调用是用eax、ebx、ecx、edx寄存器来传递参数的。其中eax传递了系统调用号，而ebx、ecx、edx是用来传递函数的参数的，其中ebx对应第一个参数，ecx对应第二个参数，依此类推。如open所传递的文件名指针是由ebx传递的，也即进入内核后，通过ebx取出文件名字符串。open的ebx指向的数据在用户空间，而当前执行的是内核空间的代码，如何在用户态和核心态之间传递数据？接下来我们继续看看open的处理
+```c
+system_call: //所有的系统调用都从system_call开始
+    ……
+    pushl %edx
+    pushl %ecx        
+    pushl %ebx                # push %ebx,%ecx,%edx，这是传递给系统调用的参数
+    movl $0x10,%edx            # 让ds,es指向GDT，指向核心地址空间
+    mov %dx,%ds
+    mov %dx,%es
+    movl $0x17,%edx            # 让fs指向的是LDT，指向用户地址空间
+    mov %dx,%fs
+    call sys_call_table(,%eax,4)    # 即call sys_open
+```
+
+由上面的代码可以看出，获取用户地址空间（用户数据段）中的数据依靠的就是段寄存器fs，下面该转到sys_open执行了，在fs/open.c文件中：
+```c
+int sys_open(const char * filename,int flag,int mode)  //filename这些参数从哪里来？
+/*是否记得上面的pushl %edx,    pushl %ecx,    pushl %ebx？
+  实际上一个C语言函数调用另一个C语言函数时，编译时就是将要
+  传递的参数压入栈中（第一个参数最后压，…），然后call …，
+  所以汇编程序调用C函数时，需要自己编写这些参数压栈的代码…*/
+{
+    ……
+    if ((i=open_namei(filename,flag,mode,&inode))<0) {
+        ……
+    }
+    ……
+}
+```
+它将参数传给了open_namei()。再沿着open_namei()继续查找，文件名先后又被传给dir_namei()、get_dir()。在get_dir()中可以看到：
+```c
+static struct m_inode * get_dir(const char * pathname)
+{
+    ……
+    if ((c=get_fs_byte(pathname))=='/') {
+        ……
+    }
+    ……
+}
+```
+处理方法就很显然了：**用get_fs_byte()获得一个字节的用户空间中的数据**。那如何实现从核心态拷贝数据到用心态内存空间中呢？我们看一看include/asm/segment.h：
+```c
+extern inline unsigned char get_fs_byte(const char * addr)
+{
+    unsigned register char _v;
+    __asm__ ("movb %%fs:%1,%0":"=r" (_v):"m" (*addr));
+    return _v;
+}
+
+extern inline void put_fs_byte(char val,char *addr)
+{
+    __asm__ ("movb %0,%%fs:%1"::"r" (val),"m" (*addr));
+}
+```
+很显然, 通过**put_fs_byte**就可以实现.  
+
+我们可以看到除了get(put)_fs_byte. 还有其他函数, 如 **get(put)_fs_word, get(put)_fs_long**. 其含义看名字就能大概明白, 我们需要**针对不同的数据类型使用不同的调用方法**.
+
+
+
+
+## 参考资料
+
+* [Linux 内核0.11 完全注释](http://www.oldlinux.org/download/clk011c-3.0.pdf)
+* [哈尔滨工业大学操作系统实验手册](https://traitorousfc.gitbooks.io/hit-oslab-manual/content/index.html)
