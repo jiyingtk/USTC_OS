@@ -75,6 +75,7 @@
 **添加的时候需要注意**
 
 - 修改system_call.s 文件中的系统调用数量(nr_system_call参数)
+- 增加系统调用编号时, 需要在下面同步增加系统调用原型函数.
 - 修改函数指针表时(sys_xxx), 需要按上面的格式增加函数原型, 如:
     ```c
       extern int sys_setreuid();
@@ -84,7 +85,7 @@
       fn_ptr sys_call_table[] = { ... }
      ```
 
-- 需要进入Linux 0.11文件系统(方法见实验一), 修改其中usr/include/unistd.h文件, 修改方式类似(这里建议不要直接拷贝linux源码中的unistd.h文件).
+- 需要**进入Linux 0.11文件系统**(方法见实验一), 修改其中usr/include/unistd.h文件, 其格式和Linux源码中的unistd.h文件相同, 修改方式也类似(这里建议不要直接拷贝linux源码中的unistd.h文件).
 
 
 #### 2、实现系统调用函数
@@ -384,7 +385,7 @@ include/linux/sys.h
 fn_ptr sys_call_table[] = { sys_setup, sys_exit, sys_fork, sys_read,
 sys_write, sys_open, sys_close, sys_waitpid, sys_creat, ...}
 ```
-我们可以看到sys_write就是这个列表的第五个(下标为之前保存在EAX寄存器中的write系统调用的系统调用号). 我们可以得知, write系统调用实际的执行者是sys_write函数, 这个函数在fs/read_write.c中, 感兴趣大家可以自己去看看.
+我们可以看到sys_write就是这个列表的第五个(下标为之前保存在EAX寄存器中的write系统调用的系统调用号). 我们可以得知, write系统调用实际的执行者是sys_write函数, 这个函数在fs/read_write.c中, 感兴趣大家可以自己去看看. **我们在添加系统调用的时候, 也需要在这里给出系统调用函数指针, 同时在上面参照格式写出原型**
 
 **我们最后对write系统调用做一个总结**:  
 
@@ -461,7 +462,7 @@ static struct m_inode * get_dir(const char * pathname)
     ……
 }
 ```
-处理方法就很显然了：**用get_fs_byte()获得一个字节的用户空间中的数据**。那如何实现从核心态拷贝数据到用心态内存空间中呢？我们看一看include/asm/segment.h：
+处理方法就很显然了：**用get_fs_byte()获得一个字节的用户空间中的数据**。那如何实现从核心态拷贝数据到用户态内存空间中呢？我们看一看include/asm/segment.h：
 ```c
 extern inline unsigned char get_fs_byte(const char * addr)
 {
