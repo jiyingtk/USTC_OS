@@ -172,15 +172,15 @@ int main() {
                 cmd2[len] = '\0';
                 printf("cmd1: %s\n", cmd1);
                 printf("cmd2: %s\n", cmd2);
-                /* 运行cmd1，并将cmd1标准输出存入buf中 */
+                /* 4.1 运行cmd1，并将cmd1标准输出存入buf中 */
 
 
-                /* 运行cmd2，并将buf内容写入到cmd2输入中 */
+                /* 4.2 运行cmd2，并将buf内容写入到cmd2输入中 */
                 
 
             }
             else {
-                /* 一般命令的运行 */
+                /* 5 一般命令的运行 */
 
             }
         }
