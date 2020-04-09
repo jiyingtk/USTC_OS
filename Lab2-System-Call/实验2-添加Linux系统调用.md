@@ -191,7 +191,7 @@ pid_t waitpid(pid_t pid,int* status,int options);	//等待指定pid的子进程�
 int execl(const char *path, const char *arg, ...);	//根据指定的文件名或目录名找到可执行文件，并用它来取代原调用进程的数据段、代码段和堆栈段，在执行完之后，原调用进程的内容除了进程号外，其他全部被新程序的内容替换了
 
 //linux 0.11中未实现, 需要我们考虑去实现的三条系统调用
-int system(const char* command);	//调用fork()产生子进程，在子进程执行参数command字符串所代表的										命令，此命令执行完后随即返回原调用的进程
+int system(const char* command);	//调用fork()产生子进程，在子进程执行参数command字符串所代表的										命令，此命令**执行完后**随即返回原调用的进程
 FILE* popen(const char* command, const char* mode);	//popen函数先执行fork，然后调用exec以执行			command，并且根据mode的值（"r"或"w"）返回一个指向子进程的stdout或指向stdin的文件指针
 int pclose(FILE* stream);	//关闭标准I/O流，等待命令执行结束
 ```
@@ -226,7 +226,7 @@ int pclose(FILE* stream);	//关闭标准I/O流，等待命令执行结束
 - 所以，在已给出代码的基础上，本部分要做的实验内容为
   - 实现一般的单条命令执行，可选实现os_system()并在main函数中引用，或者直接在main函数中实现执行单条命令的过程
   - 理解pipe系统调用和管道通信，将执行指令的子进程的标准I/O通过建立管道传输到父进程中并返回给调用者，实现os_popen函数
-    - 提示：STDOUT_FILENO/STDIN_FILENO为标准I/O输出/输入的文件描述符，pipe[0]和pipe[1]也是文件描述符，都可作为系统调用read、write的参数使用
+    - 提示：STDOUT_FILENO/STDIN_FILENO为标准I/O的文件描述符，pipe[0]和pipe[1]也是文件描述符，都可作为系统调用read、write的参数使用
   - 通过调用os_popen，实现shell的管道功能，即先执行"|"前的命令，获取其标准输出，并在执行"|"后的命令时作为标准输入
   
   - 在linux0.11下编译通过并可以满足前述要求
