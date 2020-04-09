@@ -34,6 +34,8 @@
     - HDC中usr/include/unistd.h 文件
     - 2.1实验录屏(2分钟之内)
   - EXP2.2 子目录2
+    - lab2_shell.c
+    - 2.2实验录屏(2分钟之内)
   - 实验报告(学号+姓名+实验二命名, 提交PDF版本)
 
 
@@ -176,15 +178,19 @@ int main() {
 * 如果编译出错, 首先执行 make clean, 然后执行make操作编译
 * 如果出现系统执行错误, 很可能是**hdc磁盘文件损坏**, 请重新下载hdc image文件.
 
-### 二、熟悉Linux下常见的系统调用函数和库函数
+### 二、熟悉Linux下常见的系统调用函数
 
-#### 1、熟悉以下函数的用法
+#### 1、熟悉以下系统调用函数的用法
 
 ```c
+//本实验中可用到的系统调用:
+int read(int fildes, char * buf, off_t count); //从fildes对应的文件中读取count个字符到buf内（fildes为文件描述符）
+int write(int fildes, const char * buf, off_t count); //从buf写count个字符到fildes对应的文件中
 pid_t fork();	//创建进程
 pid_t waitpid(pid_t pid,int* status,int options);	//等待指定pid的子进程结束
+int execl(const char *path, const char *arg, ...);	//根据指定的文件名或目录名找到可执行文件，并用它来取代原调用进程的数据段、代码段和堆栈段，在执行完之后，原调用进程的内容除了进程号外，其他全部被新程序的内容替换了
 
-int execv(const char *path, char *const argv[])；	//根据指定的文件名或目录名找到可执行文件，并用它来取代原调用进程的数据段、代码段和堆栈段，在执行完之后，原调用进程的内容除了进程号外，其他全部被新程序的内容替换了
+//linux 0.11中未实现, 需要我们考虑去实现的三条系统调用
 int system(const char* command);	//调用fork()产生子进程，在子进程执行参数command字符串所代表的										命令，此命令执行完后随即返回原调用的进程
 FILE* popen(const char* command, const char* mode);	//popen函数先执行fork，然后调用exec以执行			command，并且根据mode的值（"r"或"w"）返回一个指向子进程的stdout或指向stdin的文件指针
 int pclose(FILE* stream);	//关闭标准I/O流，等待命令执行结束
@@ -205,35 +211,59 @@ int pclose(FILE* stream);	//关闭标准I/O流，等待命令执行结束
   abcd
   Mon Apr 8 09:35:57 CST 2019
   2.6.26
-  OSLab2->cat 1.txt | grep abcd
-  123abcd
-  abcdefg
+  OSLab2->ls | grep 1
+  gcclib140
+  OSLab2->
   ```
+- 为了将实验重点放在对于系统机制和系统调用的理解与使用，程序的部分代码已在文件附件lab2_shell.c中给出，其中包括：
+  - 对输入按";"做划分的parseCmd()
+  - 对输入按"|"做划分的main函数部分
+  - popen、system两个函数的大致框架(这里命名为os_popen和os_system，os_pclose已给出完整代码)
+    - 注：为了简化实验难度，实验中实现的os_popen返回值为int类型的文件描述符(file descriptor)，可直接供系统调用read、write使用
+  - shell程序的大致框架
+  - 注：在给出的代码框架中，只在标明序号的地方添加内容就可以完成实验。其他部分代码的修改也是可以的，但没必要；全部代码自己写也可以，只要能够满足上述要求和下述实验内容。
 
-- 提示：程序的大致框架如下
-
-  ```c
-  int main(){
-      char cmdline[256];
-      
-      while (1) {
-      	printf("OSLab2->");
-          //读取一行字符串并根据“;”将其划分成若干个子命令
-          for (i=0; i < cmd_num; i++) {
-              if () {	//处理包含一个管道符号“|”的情况，利用popen处理命令的输入输出转换
-                  
-              }
-              else {	//通常的情况，利用fork创建子进程并执行命令
-                  
-              }
-          }
-      }
-      
-      return 0;
-  }
-  ```
-
+- 所以，在已给出代码的基础上，本部分要做的实验内容为
+  - 实现一般的单条命令执行，可选实现os_system()并在main函数中引用，或者直接在main函数中实现执行单条命令的过程
+  - 理解pipe系统调用和管道通信，将执行指令的子进程的标准I/O通过建立管道传输到父进程中并返回给调用者，实现os_popen函数
+    - 提示：STDOUT_FILENO/STDIN_FILENO为标准I/O输出/输入的文件描述符，pipe[0]和pipe[1]也是文件描述符，都可作为系统调用read、write的参数使用
+  - 通过调用os_popen，实现shell的管道功能，即先执行"|"前的命令，获取其标准输出，并在执行"|"后的命令时作为标准输入
   
+  - 在linux0.11下编译通过并可以满足前述要求
+
+
+#### 3、linux0.11下的编译与运行
+- 建议在主机（如ubuntu虚拟机）中编译运行测试后再将源代码复制到qemu linux0.11虚拟机中（使用lab1第三部分给出的方法）进行编译和运行。
+
+  *注：在主机上测试通过可以得到最高80%的分数，linux0.11下测试通过可拿到最高全部分数。*
+
+- linux 0.11下使用gcc版本为1.4，在使用0.11中gcc时应注意以下几点
+  1. 不支持" //comments "格式的注释， 如有注释请使用" /* comments */ "
+  2. 对于变量的定义尽可能放在每个代码段的开头，代码中间加入变量定义会出现undefined问题
+  3. 编译命令相同，使用 
+      ```
+      $ gcc shell.c -o shell
+      ```
+      即可对"shell.c"文件编译链接， 在当前目录下生成可执行文件"shell"，
+      ```
+      $ ./shell
+      ```
+      运行此可执行文件
+  4. gcc编译过程中的warning可以暂时忽略，若出现error信息则需要留意(代码中存在错误)
+
+#### 4、提交要求
+- 本部分实验报告要求:
+  - 大概描述代码添加过程、思路
+  - 展示实验结果
+
+- 本部分代码要求
+
+  提交可以实现要求的源代码lab2_shell.c
+
+- 本部分录屏要求
+
+  需要一边展示添加和修改的代码一边口述大概的修改思路，然后在linux 0.11下展示测试结果。请尽量控制在4分钟内。
+
 ## 背景知识学习
 
 **写在前面: 本部分内容主要参考了赵炯老师的<Linux内核完全注释> 和 哈尔滨工业大学的操作系统实验.**  
