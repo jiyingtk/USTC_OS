@@ -167,7 +167,7 @@ int main() {
     int status;
     while(1){
 	    write(STDOUT_FILENO, "os shell ->", 11);
-        gets(cmdline);   //input cmdline
+        gets(cmdline);
         cmd_num = parseCmd(cmdline, cmds);
         for(i=0;i<cmd_num;i++){
             char *div = strchr(cmds[i], '|');
